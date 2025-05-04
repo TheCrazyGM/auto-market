@@ -17,7 +17,6 @@ Author: thecrazygm
 
 import argparse
 import sys
-import time
 import traceback
 from typing import List, Optional
 
@@ -120,14 +119,14 @@ def sell_he_tokens_for_all_accounts(
                 tokens_to_process = [
                     t
                     for t in tokens
-                    if t.symbol != target_token
-                    and t.symbol not in (whitelist or [])
+                    if t.symbol.upper() != target_token.upper()
+                    and t.symbol.upper() not in (whitelist or [])
                     and t.balance > min_token_amount
                 ]
                 logger.debug(f"[{account_name}] Found {len(tokens_to_process)} tokens to sell")
             else:
-                # Find the specified token
-                token = next((t for t in tokens if t.symbol == token_symbol), None)
+                # Find the specified token (case-insensitive matching)
+                token = next((t for t in tokens if t.symbol.upper() == token_symbol.upper()), None)
                 if not token:
                     logger.info(f"[{account_name}] No {token_symbol} tokens found.")
                     continue
@@ -288,11 +287,15 @@ def main() -> None:
         logger.error("Either --token or --all-tokens must be specified")
         sys.exit(1)
 
+    # Convert whitelist tokens to uppercase
+    if whitelist:
+        whitelist = [token.upper() for token in whitelist]
+
     if args.all_tokens:
         logger.info(f"Using whitelist from config: {whitelist}")
         token_symbol = ""  # Not used in sell-all mode
     else:
-        token_symbol = args.token
+        token_symbol = args.token.upper() if args.token else ""
 
     # Sell tokens for all listed accounts
     sell_he_tokens_for_all_accounts(
