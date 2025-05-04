@@ -1,0 +1,22 @@
+# Hive accounts configuration for auto-market tool
+# The first account in the list will be used as the authority account
+
+# List of accounts to sell HBD for
+accounts:
+  - youraccount
+  - anotheraccount
+  - thirdaccount
+# Active key for the authority account (first in the list)
+# Can also be provided via --active-key CLI argument or ACTIVE_WIF environment variable
+# active_key: YOUR_ACTIVE_KEY_HERE
+
+# Hive-Engine token whitelist
+# These tokens will not be sold when using the --all-tokens option
+whitelist:
+  - SWAP.HIVE
+  - SWAP.BTC
+  - SWAP.LTC
+  - SWAP.ETH
+  - INCOME
+  - BEE
+  - LEO
