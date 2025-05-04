@@ -181,7 +181,6 @@ def sell_he_tokens_for_all_accounts(
                             f"[{account_name}] {token.symbol} sold successfully at {highest_bid:.8f} {target_token} using authority of {main_account_name}."
                         )
                     # Count each successful token sale
-                    time.sleep(2)
                     success_count += 1
                     account_success = True
                 else:
