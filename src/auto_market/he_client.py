@@ -71,35 +71,62 @@ def get_token_balances(he_wallet: HeWallet) -> List[Token]:
         return []
 
 
-def get_market_price(market: Market, symbol: str) -> Tuple[float, float]:
+def get_full_order_book(market, symbol, book_type='buy', batch_size=100):
     """
-    Get the highest bid and lowest ask prices for a token.
-
+    Retrieve the full order book (buy or sell) for a token by paging through all orders.
     Args:
         market: The Hive-Engine market instance.
         symbol: The token symbol.
+        book_type: 'buy' for bids, 'sell' for asks.
+        batch_size: Number of orders to fetch per request.
+    Returns:
+        List of all orders (dicts).
+    """
+    orders = []
+    offset = 0
+    while True:
+        if book_type == 'buy':
+            batch = market.get_buy_book(symbol, limit=batch_size, offset=offset)
+        else:
+            batch = market.get_sell_book(symbol, limit=batch_size, offset=offset)
+        if not batch:
+            break
+        orders.extend(batch)
+        if len(batch) < batch_size:
+            break
+        offset += batch_size
+    return orders
 
+
+def get_market_price(market: Market, symbol: str) -> Tuple[float, float]:
+    """
+    Get the true highest bid and lowest ask prices for a token by draining the full order book.
+    Args:
+        market: The Hive-Engine market instance.
+        symbol: The token symbol.
     Returns:
         Tuple of (highest bid price, lowest ask price)
     """
     try:
-        # Get buy book (bids)
-        highest_bid = 0
-        buy_book = market.get_buy_book(symbol, limit=1)
-        if buy_book and len(buy_book) > 0:
-            highest_bid = float(buy_book[0].get("price", 0))
+        # Get all buy orders (bids)
+        buy_orders = get_full_order_book(market, symbol, book_type='buy', batch_size=100)
+        highest_bid = max((float(order.get('price', 0)) for order in buy_orders), default=0)
+        total_bid_quantity = sum(float(order.get('quantity', 0)) for order in buy_orders)
+        logger.debug(f"Total buy orders for {symbol}: {total_bid_quantity} at various prices. Highest bid: {highest_bid}")
 
-        # Get sell book (asks)
-        lowest_ask = 0
-        sell_book = market.get_sell_book(symbol, limit=1)
-        if sell_book and len(sell_book) > 0:
-            lowest_ask = float(sell_book[0].get("price", 0))
+        # Get all sell orders (asks)
+        sell_orders = get_full_order_book(market, symbol, book_type='sell', batch_size=100)
+        # Only consider positive prices
+        lowest_ask = min((float(order.get('price', float('inf'))) for order in sell_orders if float(order.get('price', 0)) > 0), default=0)
+        total_ask_quantity = sum(float(order.get('quantity', 0)) for order in sell_orders)
+        logger.debug(f"Total sell orders for {symbol}: {total_ask_quantity} at various prices. Lowest ask: {lowest_ask}")
 
         logger.debug(f"{symbol} market: highest bid = {highest_bid}, lowest ask = {lowest_ask}")
         return highest_bid, lowest_ask
     except Exception as e:
         logger.error(f"Error getting market price for {symbol}: {e}")
         return 0, 0
+
 
 
 def sell_token(
@@ -111,25 +138,48 @@ def sell_token(
     dry_run: bool = False,
 ) -> bool:
     """
-    Sell a token on the Hive-Engine market.
+    Sell a token on the Hive-Engine market at the best available price (highest bid).
 
     Args:
         market: The Hive-Engine market instance.
         account_name: The account name to sell from.
         symbol: The token symbol to sell.
         amount: The amount to sell.
-        price: The price to sell at.
+        price: The price to sell at (should always be the highest bid, never the lowest ask).
         dry_run: If True, only simulate the sell, do not broadcast.
 
     Returns:
         True if the sell was successful, False otherwise.
+
+    Note:
+        You should always sell at the highest bid (best price a buyer is willing to pay).
+        Never use the lowest ask as your sell price.
     """
     try:
+        # Calculate the total value
+        total_value = amount * price
+
+        # Ensure we are not accidentally using the lowest ask as the sell price
+        # (This is a sanity check: you want to sell at the highest bid, not the lowest ask)
+        if price <= 0:
+            logger.error(f"[{account_name}] Refusing to sell {symbol} at price <= 0 (invalid highest bid)")
+            return False
+
+        # Format for display - this is what will be shown in the log
+        formatted_amount = f"{amount:.6f}"
+        formatted_price = f"{price:.8f}"
+        formatted_total = f"{total_value:.6f}"
+
+        # Log the transaction with the calculated values
+        logger.info(
+            f"[{account_name}] Selling {formatted_amount} {symbol} for {formatted_total} SWAP.HIVE at {formatted_price} SWAP.HIVE/{symbol}. (Best bid)"
+        )
+
         if dry_run:
-            # No logging here, we'll log in the calling function with more context
+            # No actual transaction in dry run mode
             return True
 
-        # The Market.sell method signature is: sell(account, amount, symbol, price)
+        # Always sell at the highest bid (best price a buyer is willing to pay)
         market.sell(account_name, amount, symbol, price)
         logger.info(f"Sell order placed for {amount} {symbol} at {price}")
 
@@ -164,8 +214,21 @@ def buy_token(
         True if the buy was successful, False otherwise.
     """
     try:
+        # Calculate the total value
+        total_value = amount * price
+
+        # Format for display - this is what will be shown in the log
+        formatted_amount = f"{amount:.6f}"
+        formatted_price = f"{price:.8f}"
+        formatted_total = f"{total_value:.6f}"
+
+        # Log the transaction with the calculated values
+        logger.info(
+            f"[{account_name}] Buying {formatted_amount} {symbol} for {formatted_total} SWAP.HIVE at {formatted_price} SWAP.HIVE/{symbol}."
+        )
+
         if dry_run:
-            logger.info(f"[DRY RUN] Would buy {amount} {symbol} at {price}")
+            # No actual transaction in dry run mode
             return True
 
         # The Market.buy method signature is: buy(account, amount, symbol, price)
