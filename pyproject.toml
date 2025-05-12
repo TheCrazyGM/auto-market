@@ -1,6 +1,6 @@
 [project]
 name = "auto-market"
-version = "0.0.2"
+version = "0.0.3"
 description = "Automatically sell tokens at market value for multiple Hive accounts using a single authority account"
 readme = "README.md"
 requires-python = ">=3.12"

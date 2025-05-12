@@ -91,7 +91,9 @@ def sell_he_tokens_for_all_accounts(
 
             # Create a trader specific to this account
             try:
-                account_trader = HiveEngineTrader(hive, account_name, min_token_amount, max_token_amount)
+                account_trader = HiveEngineTrader(
+                    hive, account_name, min_token_amount, max_token_amount
+                )
                 logger.debug(f"[{account_name}] Hive-Engine trader initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize Hive-Engine trader for {account_name}: {e}")
@@ -240,7 +242,9 @@ def buy_he_tokens_for_all_accounts(
 
             # Create a trader specific to this account
             try:
-                account_trader = HiveEngineTrader(hive, account_name, min_swap_hive_amount, max_swap_hive_amount)
+                account_trader = HiveEngineTrader(
+                    hive, account_name, min_swap_hive_amount, max_swap_hive_amount
+                )
                 logger.debug(f"[{account_name}] Hive-Engine trader initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize Hive-Engine trader for {account_name}: {e}")
@@ -251,7 +255,9 @@ def buy_he_tokens_for_all_accounts(
             logger.debug(f"[{account_name}] Retrieved {len(tokens)} token balances")
 
             # Find the target token (SWAP.HIVE) balance
-            swap_hive_token = next((t for t in tokens if t.symbol.upper() == target_token.upper()), None)
+            swap_hive_token = next(
+                (t for t in tokens if t.symbol.upper() == target_token.upper()), None
+            )
             if not swap_hive_token:
                 logger.info(f"[{account_name}] No {target_token} tokens found.")
                 continue

@@ -124,7 +124,9 @@ class HiveTrader:
                 )
                 logger.debug(f"[DRY RUN] Transaction details: {tx}")
             else:
-                logger.info(f"[{account_name}] Market buy order placed successfully for {formatted_hive} HIVE with {formatted_hbd} HBD.")
+                logger.info(
+                    f"[{account_name}] Market buy order placed successfully for {formatted_hive} HIVE with {formatted_hbd} HBD."
+                )
                 logger.debug(f"Transaction details: {tx}")
             return True
 
@@ -135,7 +137,9 @@ class HiveTrader:
             logger.debug(traceback.format_exc())
             return False
 
-    def buy_hbd(self, account_name: str, min_hive_amount: float, max_hive: Optional[float] = None) -> bool:
+    def buy_hbd(
+        self, account_name: str, min_hive_amount: float, max_hive: Optional[float] = None
+    ) -> bool:
         """
         Buy HBD with HIVE at the market's highest bid price.
         Uses the authority of the key provided during HiveTrader initialization.
@@ -158,7 +162,9 @@ class HiveTrader:
 
             # Check if there's enough HIVE to buy HBD
             if not hive_balance or hive_balance.amount <= min_hive_amount:
-                logger.info(f"[{account_name}] Not enough HIVE to buy HBD (minimum: {min_hive_amount}).")
+                logger.info(
+                    f"[{account_name}] Not enough HIVE to buy HBD (minimum: {min_hive_amount})."
+                )
                 return True  # Not an error, just nothing to do
 
             # Calculate how much HIVE to use
@@ -192,7 +198,9 @@ class HiveTrader:
                 )
                 logger.debug(f"[DRY RUN] Transaction details: {tx}")
             else:
-                logger.info(f"[{account_name}] Market sell order placed successfully for {formatted_hbd} HBD with {formatted_hive} HIVE.")
+                logger.info(
+                    f"[{account_name}] Market sell order placed successfully for {formatted_hbd} HBD with {formatted_hive} HIVE."
+                )
                 logger.debug(f"Transaction details: {tx}")
             return True
 

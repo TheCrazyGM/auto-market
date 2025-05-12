@@ -57,7 +57,13 @@ class HiveEngineTrader:
     Supports both selling tokens for SWAP.HIVE and buying tokens with SWAP.HIVE.
     """
 
-    def __init__(self, hive: Hive, account_name: str, min_token_amount: float, max_token_amount: Optional[float] = None):
+    def __init__(
+        self,
+        hive: Hive,
+        account_name: str,
+        min_token_amount: float,
+        max_token_amount: Optional[float] = None,
+    ):
         """
         Initialize Hive-Engine trading instance.
 
@@ -96,7 +102,9 @@ class HiveEngineTrader:
             logger.error(f"Error retrieving token balances: {e}")
             return []
 
-    def get_full_order_book(self, symbol: str, book_type: str = 'buy', batch_size: int = 100) -> List[dict]:
+    def get_full_order_book(
+        self, symbol: str, book_type: str = "buy", batch_size: int = 100
+    ) -> List[dict]:
         """
         Retrieve the full order book (buy or sell) for a token by paging through all orders.
 
@@ -111,7 +119,7 @@ class HiveEngineTrader:
         orders = []
         offset = 0
         while True:
-            if book_type == 'buy':
+            if book_type == "buy":
                 batch = self.market.get_buy_book(symbol, limit=batch_size, offset=offset)
             else:
                 batch = self.market.get_sell_book(symbol, limit=batch_size, offset=offset)
@@ -135,17 +143,28 @@ class HiveEngineTrader:
         """
         try:
             # Get all buy orders (bids)
-            buy_orders = self.get_full_order_book(symbol, book_type='buy', batch_size=100)
-            highest_bid = max((float(order.get('price', 0)) for order in buy_orders), default=0)
-            total_bid_quantity = sum(float(order.get('quantity', 0)) for order in buy_orders)
-            logger.debug(f"Total buy orders for {symbol}: {total_bid_quantity} at various prices. Highest bid: {highest_bid}")
+            buy_orders = self.get_full_order_book(symbol, book_type="buy", batch_size=100)
+            highest_bid = max((float(order.get("price", 0)) for order in buy_orders), default=0)
+            total_bid_quantity = sum(float(order.get("quantity", 0)) for order in buy_orders)
+            logger.debug(
+                f"Total buy orders for {symbol}: {total_bid_quantity} at various prices. Highest bid: {highest_bid}"
+            )
 
             # Get all sell orders (asks)
-            sell_orders = self.get_full_order_book(symbol, book_type='sell', batch_size=100)
+            sell_orders = self.get_full_order_book(symbol, book_type="sell", batch_size=100)
             # Only consider positive prices
-            lowest_ask = min((float(order.get('price', float('inf'))) for order in sell_orders if float(order.get('price', 0)) > 0), default=0)
-            total_ask_quantity = sum(float(order.get('quantity', 0)) for order in sell_orders)
-            logger.debug(f"Total sell orders for {symbol}: {total_ask_quantity} at various prices. Lowest ask: {lowest_ask}")
+            lowest_ask = min(
+                (
+                    float(order.get("price", float("inf")))
+                    for order in sell_orders
+                    if float(order.get("price", 0)) > 0
+                ),
+                default=0,
+            )
+            total_ask_quantity = sum(float(order.get("quantity", 0)) for order in sell_orders)
+            logger.debug(
+                f"Total sell orders for {symbol}: {total_ask_quantity} at various prices. Lowest ask: {lowest_ask}"
+            )
 
             logger.debug(f"{symbol} market: highest bid = {highest_bid}, lowest ask = {lowest_ask}")
             return highest_bid, lowest_ask
@@ -176,7 +195,9 @@ class HiveEngineTrader:
             # Ensure we are not accidentally using the lowest ask as the sell price
             # (This is a sanity check: you want to sell at the highest bid, not the lowest ask)
             if price <= 0:
-                logger.error(f"[{self.account_name}] Refusing to sell {symbol} at price <= 0 (invalid highest bid)")
+                logger.error(
+                    f"[{self.account_name}] Refusing to sell {symbol} at price <= 0 (invalid highest bid)"
+                )
                 return False
 
             # Format for display - this is what will be shown in the log
@@ -245,7 +266,9 @@ class HiveEngineTrader:
             logger.error(f"Error buying {symbol}: {e}")
             return False
 
-    def transfer_token(self, to_account: str, symbol: str, amount: float, memo: str = "Automatic transfer") -> bool:
+    def transfer_token(
+        self, to_account: str, symbol: str, amount: float, memo: str = "Automatic transfer"
+    ) -> bool:
         """
         Transfer a token to another account.
 

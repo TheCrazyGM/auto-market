@@ -195,7 +195,9 @@ def buy_hbd_for_all_accounts(
 
             # Check if there's enough HIVE to buy HBD
             if not hive_balance or hive_balance.amount <= min_hive_amount:
-                logger.info(f"[{account_name}] Not enough HIVE to buy HBD (minimum: {min_hive_amount}).")
+                logger.info(
+                    f"[{account_name}] Not enough HIVE to buy HBD (minimum: {min_hive_amount})."
+                )
                 continue
 
             # Calculate how much HIVE to use
