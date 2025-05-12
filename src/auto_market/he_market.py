@@ -1,16 +1,16 @@
 """
-Hive-Engine Token Market Seller
+Hive-Engine Token Market Trader
 ----------------------------
-This script connects to the Hive blockchain and Hive-Engine sidechain to sell tokens
+This script connects to the Hive blockchain and Hive-Engine sidechain to trade tokens
 for multiple accounts using the authority (active key) of a single main account.
 
 Features:
 - Connects to Hive nodes using an active key from the environment, YAML config, or CLI.
 - Fetches token balances from Hive-Engine for each account.
-- Sells specified tokens at the current market price.
+- Sells or buys specified tokens at the current market price.
 - Uses the authority of the main account (the one whose active key is provided).
 - Provides informative logging and robust error handling.
-- Supports dry-run mode to simulate sells without broadcasting.
+- Supports dry-run mode to simulate trades without broadcasting.
 
 Author: thecrazygm
 """
@@ -26,6 +26,7 @@ from auto_market.he_client import (
     get_market_price,
     get_token_balances,
     sell_token,
+    buy_token,
 )
 from auto_market.hive_client import connect_to_hive
 from auto_market.logging_setup import set_debug_logging, setup_logging
@@ -200,15 +201,152 @@ def sell_he_tokens_for_all_accounts(
     )
 
 
+def buy_he_tokens_for_all_accounts(
+    accounts: List[str],
+    main_account_name: str,
+    active_key: str,
+    token_symbol: str,
+    min_swap_hive_amount: float,
+    max_swap_hive_amount: Optional[float] = None,
+    target_token: str = "SWAP.HIVE",
+    dry_run: bool = False,
+) -> None:
+    """
+    Buy Hive-Engine tokens for all accounts in the list using the authority of the main account.
+
+    Args:
+        accounts: List of account names to buy tokens for.
+        main_account_name: The account whose active key is used for authority.
+        active_key: The active key for transaction authority.
+        token_symbol: The token symbol to buy.
+        min_swap_hive_amount: Minimum SWAP.HIVE balance to trigger a buy operation.
+        max_swap_hive_amount: Maximum SWAP.HIVE amount to use in one transaction (None = no limit).
+        target_token: The token to use for buying (default: SWAP.HIVE).
+        dry_run: If True, only simulate the buy, do not broadcast.
+    """
+    logger.info(
+        f"Buying {token_symbol} tokens for {len(accounts)} accounts using {main_account_name} authority"
+    )
+
+    # Connect to Hive blockchain
+    try:
+        hive = connect_to_hive(active_key, dry_run)
+    except Exception as e:
+        logger.error(f"Failed to connect to Hive blockchain: {e}")
+        return
+
+    # Initialize Hive-Engine market
+    try:
+        # We only need the market from the main account
+        _, market = connect_to_hive_engine(hive, main_account_name)
+    except Exception as e:
+        logger.error(f"Failed to initialize Hive-Engine: {e}")
+        return
+
+    logger.debug(f"Account list to process: {accounts}")
+
+    # Process each account in the list
+    success_count = 0  # Count of successful token buys
+    processed_accounts = 0  # Count of successfully processed accounts
+    for account_name in accounts:
+        try:
+            logger.debug(f"Processing account: {account_name}")
+            account_success = False  # Track if this account had any successful buys
+
+            # Create a wallet specific to this account
+            try:
+                account_wallet, _ = connect_to_hive_engine(hive, account_name)
+                logger.debug(f"[{account_name}] Hive-Engine wallet initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Hive-Engine wallet for {account_name}: {e}")
+                continue
+
+            # Get token balances for the account
+            tokens = get_token_balances(account_wallet)
+            logger.debug(f"[{account_name}] Retrieved {len(tokens)} token balances")
+
+            # Find the target token (SWAP.HIVE) balance
+            swap_hive_token = next((t for t in tokens if t.symbol.upper() == target_token.upper()), None)
+            if not swap_hive_token:
+                logger.info(f"[{account_name}] No {target_token} tokens found.")
+                continue
+
+            logger.debug(f"[{account_name}] {target_token} balance: {swap_hive_token.balance}")
+
+            # Check if there's enough of the target token to use for buying
+            if swap_hive_token.balance <= min_swap_hive_amount:
+                logger.info(
+                    f"[{account_name}] Not enough {target_token} to buy tokens (minimum: {min_swap_hive_amount})."
+                )
+                continue
+
+            # Calculate how much of the target token to use
+            use_amount = swap_hive_token.balance
+            if max_swap_hive_amount is not None and use_amount > max_swap_hive_amount:
+                logger.info(
+                    f"[{account_name}] Limiting {target_token} to use from {use_amount:.6f} to max_amount={max_swap_hive_amount:.6f}"
+                )
+                use_amount = max_swap_hive_amount
+
+            # Get market data for the token we want to buy
+            _, lowest_ask = get_market_price(market, token_symbol)
+            if lowest_ask <= 0:
+                logger.warning(f"[{account_name}] No sellers for {token_symbol}, skipping.")
+                continue
+
+            # Calculate how many tokens we can buy with our SWAP.HIVE
+            buy_amount = use_amount / lowest_ask
+            logger.info(
+                f"[{account_name}] Buying {buy_amount:.6f} {token_symbol} for {use_amount:.6f} {target_token} at {lowest_ask:.6f} {target_token}/{token_symbol}"
+            )
+
+            # Execute the buy
+            if buy_token(
+                market,
+                account_name,
+                token_symbol,
+                buy_amount,
+                lowest_ask,
+                dry_run,
+            ):
+                if dry_run:
+                    logger.info(
+                        f"[DRY RUN] Would buy {buy_amount:.6f} {token_symbol} at {lowest_ask:.8f} {target_token} for {account_name} using authority of {main_account_name}."
+                    )
+                else:
+                    logger.info(
+                        f"[{account_name}] {token_symbol} bought successfully at {lowest_ask:.8f} {target_token} using authority of {main_account_name}."
+                    )
+                # Count each successful token buy
+                success_count += 1
+                account_success = True
+            else:
+                logger.error(f"[{account_name}] Failed to buy {token_symbol}.")
+                continue
+
+            # If we had any successful buys for this account, increment the account counter
+            if account_success:
+                processed_accounts += 1
+
+        except Exception as e:
+            logger.error(f"Error processing account {account_name}: {type(e).__name__}: {e}")
+            logger.debug(traceback.format_exc())
+
+    # Report both token buys and account statistics
+    logger.info(
+        f"Successfully bought {success_count} tokens for {processed_accounts} out of {len(accounts)} accounts"
+    )
+
+
 def main() -> None:
     """
-    Main entry point for the Hive-Engine Token Market Seller script.
+    Main entry point for the Hive-Engine Token Market Trader script.
     Parses command-line arguments, loads the active key, connects to Hive-Engine,
-    and sells tokens for all accounts in the configuration.
+    and trades tokens for all accounts in the configuration based on the operation mode.
     """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
-        description="Sell Hive-Engine tokens for multiple Hive accounts using a single active key"
+        description="Trade Hive-Engine tokens for multiple Hive accounts using a single active key"
     )
     parser.add_argument(
         "-a",
@@ -223,7 +361,7 @@ def main() -> None:
     parser.add_argument(
         "-t",
         "--token",
-        help="Token symbol to sell (e.g., SWAP.BTC, LEO, etc.). Not required if --all-tokens is used.",
+        help="Token symbol to trade (e.g., SWAP.BTC, LEO, etc.). Not required if --all-tokens is used.",
     )
     parser.add_argument(
         "-A",
@@ -236,19 +374,19 @@ def main() -> None:
         "--min-amount",
         type=float,
         default=0.00001,
-        help="Minimum token amount to trigger a sell (default: 0.00001)",
+        help="Minimum amount to trigger a trade operation (default: 0.00001)",
     )
     parser.add_argument(
         "-x",
         "--max-amount",
         type=float,
         default=None,
-        help="Maximum token amount to sell in one run (default: no limit)",
+        help="Maximum amount to trade in one run (default: no limit)",
     )
     parser.add_argument(
         "--target",
         default="SWAP.HIVE",
-        help="Target token to sell for (default: SWAP.HIVE)",
+        help="Target token to trade with (default: SWAP.HIVE)",
     )
     parser.add_argument(
         "-d",
@@ -257,9 +395,15 @@ def main() -> None:
         help="Enable debug logging",
     )
     parser.add_argument(
+        "--operation",
+        choices=["sell", "buy"],
+        default="sell",
+        help="Operation mode: 'sell' tokens for SWAP.HIVE or 'buy' tokens with SWAP.HIVE (default: sell)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Simulate selling tokens without broadcasting",
+        help="Simulate trading tokens without broadcasting",
     )
     args = parser.parse_args()
 
@@ -297,19 +441,44 @@ def main() -> None:
     else:
         token_symbol = args.token.upper() if args.token else ""
 
-    # Sell tokens for all listed accounts
-    sell_he_tokens_for_all_accounts(
-        accounts,
-        main_account_name,
-        active_key,
-        token_symbol,
-        args.min_amount,
-        args.max_amount,
-        args.target,
-        sell_all=args.all_tokens,
-        whitelist=whitelist,
-        dry_run=args.dry_run,
-    )
+    # Execute the requested operation
+    operation = args.operation
+    
+    if operation == "sell":
+        logger.info("Operation mode: Selling tokens for SWAP.HIVE")
+        sell_he_tokens_for_all_accounts(
+            accounts,
+            main_account_name,
+            active_key,
+            token_symbol,
+            args.min_amount,
+            args.max_amount,
+            args.target,
+            sell_all=args.all_tokens,
+            whitelist=whitelist,
+            dry_run=args.dry_run,
+        )
+    else:  # operation == "buy"
+        # For buy operations, we don't support the --all-tokens flag
+        if args.all_tokens:
+            logger.error("The --all-tokens flag is not supported for buy operations")
+            sys.exit(1)
+            
+        if not args.token:
+            logger.error("The --token flag is required for buy operations")
+            sys.exit(1)
+            
+        logger.info("Operation mode: Buying tokens with SWAP.HIVE")
+        buy_he_tokens_for_all_accounts(
+            accounts,
+            main_account_name,
+            active_key,
+            token_symbol,
+            args.min_amount,
+            args.max_amount,
+            args.target,
+            dry_run=args.dry_run,
+        )
 
 
 if __name__ == "__main__":

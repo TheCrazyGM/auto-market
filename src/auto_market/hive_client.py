@@ -48,6 +48,7 @@ def connect_to_hive(active_key: str, dry_run: bool = False) -> Hive:
 class HiveTrader:
     """
     Class for handling Hive market trading operations.
+    Supports both selling HBD for HIVE and buying HBD with HIVE.
     """
 
     def __init__(self, hive: Hive, min_hbd_amount: float, max_hbd: Optional[float] = None):
@@ -78,7 +79,7 @@ class HiveTrader:
             account_name: Account whose HBD balance is checked and sold.
 
         Returns:
-            True if rewards were claimed or there were none to claim, False on error.
+            True if operation was successful, False on error.
         """
         try:
             logger.debug(f"Instantiating account object for: {account_name}")
@@ -126,5 +127,68 @@ class HiveTrader:
             import traceback
 
             logger.error(f"Error selling HBD for {account_name}: {type(e).__name__}: {e}")
+            logger.debug(traceback.format_exc())
+            return False
+
+    def buy_hbd(self, account_name: str, min_hive_amount: float, max_hive: Optional[float] = None) -> bool:
+        """
+        Buy HBD with HIVE at the market's highest bid price.
+        Uses the authority of the key provided during HiveTrader initialization.
+
+        Args:
+            account_name: Account whose HIVE balance is checked and used to buy HBD.
+            min_hive_amount: Minimum HIVE balance to trigger a buy operation.
+            max_hive: Maximum HIVE to use in one transaction (None = no limit).
+
+        Returns:
+            True if operation was successful, False on error.
+        """
+        try:
+            logger.debug(f"Instantiating account object for: {account_name}")
+            account = Account(account_name, blockchain_instance=self.hive)
+            hive_balance = account.get_balance("available", "HIVE")
+            logger.info(
+                f"[{account_name}] HIVE available to buy HBD: {hive_balance if hive_balance else '0.000 HIVE'}"
+            )
+
+            # Check if there's enough HIVE to buy HBD
+            if not hive_balance or hive_balance.amount <= min_hive_amount:
+                logger.info(f"[{account_name}] Not enough HIVE to buy HBD (minimum: {min_hive_amount}).")
+                return True  # Not an error, just nothing to do
+
+            # Calculate how much HIVE to use
+            available_hive = float(hive_balance.amount)
+            if max_hive is not None and available_hive > max_hive:
+                logger.info(
+                    f"[{account_name}] Limiting HIVE to use from {available_hive:.3f} to max_hive={max_hive:.3f}"
+                )
+                available_hive = max_hive
+
+            # Get market data and calculate HBD to buy
+            ticker = self.market.ticker()
+            high_bid = float(ticker["highest_bid"]["price"])
+            sell_amount = available_hive
+            buy_hbd_amount = available_hive * high_bid
+            logger.info(
+                f"[{account_name}] Buying {buy_hbd_amount:.3f} HBD with {sell_amount:.3f} HIVE at {high_bid:.3f} HBD/HIVE."
+            )
+
+            # Execute the market sell (selling HIVE for HBD)
+            tx = self.market.sell(high_bid, sell_amount, account=account_name)
+
+            if self.hive.nobroadcast:
+                logger.info(
+                    f"[{account_name}] [DRY RUN] Would have bought {buy_hbd_amount:.3f} HBD with {sell_amount:.3f} HIVE."
+                )
+                logger.debug(f"[DRY RUN] Transaction details: {tx}")
+            else:
+                logger.info(f"[{account_name}] Market sell order placed successfully.")
+                logger.debug(f"Transaction details: {tx}")
+            return True
+
+        except Exception as e:
+            import traceback
+
+            logger.error(f"Error buying HBD for {account_name}: {type(e).__name__}: {e}")
             logger.debug(traceback.format_exc())
             return False
