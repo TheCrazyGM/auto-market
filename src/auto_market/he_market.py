@@ -21,13 +21,7 @@ import traceback
 from typing import List, Optional
 
 from auto_market.config import get_active_key, load_accounts_and_active_key
-from auto_market.he_client import (
-    connect_to_hive_engine,
-    get_market_price,
-    get_token_balances,
-    sell_token,
-    buy_token,
-)
+from auto_market.he_client import HiveEngineTrader
 from auto_market.hive_client import connect_to_hive
 from auto_market.logging_setup import set_debug_logging, setup_logging
 
@@ -82,13 +76,8 @@ def sell_he_tokens_for_all_accounts(
         logger.error(f"Failed to connect to Hive blockchain: {e}")
         return
 
-    # Initialize Hive-Engine market
-    try:
-        # We only need the market from the main account
-        _, market = connect_to_hive_engine(hive, main_account_name)
-    except Exception as e:
-        logger.error(f"Failed to initialize Hive-Engine: {e}")
-        return
+    # We don't need to initialize a trader for the main account here
+    # Each account will have its own trader instance
 
     logger.debug(f"Account list to process: {accounts}")
 
@@ -100,16 +89,16 @@ def sell_he_tokens_for_all_accounts(
             logger.debug(f"Processing account: {account_name}")
             account_success = False  # Track if this account had any successful sales
 
-            # Create a wallet specific to this account
+            # Create a trader specific to this account
             try:
-                account_wallet, _ = connect_to_hive_engine(hive, account_name)
-                logger.debug(f"[{account_name}] Hive-Engine wallet initialized")
+                account_trader = HiveEngineTrader(hive, account_name, min_token_amount, max_token_amount)
+                logger.debug(f"[{account_name}] Hive-Engine trader initialized")
             except Exception as e:
-                logger.error(f"Failed to initialize Hive-Engine wallet for {account_name}: {e}")
+                logger.error(f"Failed to initialize Hive-Engine trader for {account_name}: {e}")
                 continue
 
             # Get token balances for the account
-            tokens = get_token_balances(account_wallet)
+            tokens = account_trader.get_token_balances()
             logger.debug(f"[{account_name}] Retrieved {len(tokens)} token balances")
 
             # Process tokens based on mode
@@ -137,7 +126,7 @@ def sell_he_tokens_for_all_accounts(
                 # Check if there's enough of the token to sell
                 if token.balance <= min_token_amount:
                     logger.info(
-                        f"[{account_name}] Not enough {token_symbol} to sell (minimum: {min_token_amount})."
+                        f"[{account_name}] Not enough {token_symbol} to sell (minimum: {min_token_amount:.6f})."
                     )
                     continue
 
@@ -154,7 +143,7 @@ def sell_he_tokens_for_all_accounts(
                     sell_amount = max_token_amount
 
                 # Get market data
-                highest_bid, _ = get_market_price(market, token.symbol)
+                highest_bid, _ = account_trader.get_market_price(token.symbol)
                 if highest_bid <= 0:
                     logger.warning(f"[{account_name}] No buyers for {token.symbol}, skipping.")
                     continue
@@ -163,22 +152,23 @@ def sell_he_tokens_for_all_accounts(
                     f"[{account_name}] Selling {sell_amount:.6f} {token.symbol} at {highest_bid:.6f} {target_token}"
                 )
 
+                # Format values for consistent display
+                formatted_amount = f"{sell_amount:.6f}"
+                formatted_price = f"{highest_bid:.8f}"
+
                 # Execute the sell
-                if sell_token(
-                    market,
-                    account_name,
+                if account_trader.sell_token(
                     token.symbol,
                     sell_amount,
                     highest_bid,
-                    dry_run,
                 ):
                     if dry_run:
                         logger.info(
-                            f"[DRY RUN] Would sell {sell_amount:.6f} {token.symbol} at {highest_bid:.8f} {target_token} for {account_name} using authority of {main_account_name}."
+                            f"[DRY RUN] Would sell {formatted_amount} {token.symbol} at {formatted_price} {target_token} for {account_name} using authority of {main_account_name}."
                         )
                     else:
                         logger.info(
-                            f"[{account_name}] {token.symbol} sold successfully at {highest_bid:.8f} {target_token} using authority of {main_account_name}."
+                            f"[{account_name}] {token.symbol} sold successfully at {formatted_price} {target_token} using authority of {main_account_name}."
                         )
                     # Count each successful token sale
                     success_count += 1
@@ -235,13 +225,8 @@ def buy_he_tokens_for_all_accounts(
         logger.error(f"Failed to connect to Hive blockchain: {e}")
         return
 
-    # Initialize Hive-Engine market
-    try:
-        # We only need the market from the main account
-        _, market = connect_to_hive_engine(hive, main_account_name)
-    except Exception as e:
-        logger.error(f"Failed to initialize Hive-Engine: {e}")
-        return
+    # We don't need to initialize a trader for the main account here
+    # Each account will have its own trader instance
 
     logger.debug(f"Account list to process: {accounts}")
 
@@ -253,16 +238,16 @@ def buy_he_tokens_for_all_accounts(
             logger.debug(f"Processing account: {account_name}")
             account_success = False  # Track if this account had any successful buys
 
-            # Create a wallet specific to this account
+            # Create a trader specific to this account
             try:
-                account_wallet, _ = connect_to_hive_engine(hive, account_name)
-                logger.debug(f"[{account_name}] Hive-Engine wallet initialized")
+                account_trader = HiveEngineTrader(hive, account_name, min_swap_hive_amount, max_swap_hive_amount)
+                logger.debug(f"[{account_name}] Hive-Engine trader initialized")
             except Exception as e:
-                logger.error(f"Failed to initialize Hive-Engine wallet for {account_name}: {e}")
+                logger.error(f"Failed to initialize Hive-Engine trader for {account_name}: {e}")
                 continue
 
             # Get token balances for the account
-            tokens = get_token_balances(account_wallet)
+            tokens = account_trader.get_token_balances()
             logger.debug(f"[{account_name}] Retrieved {len(tokens)} token balances")
 
             # Find the target token (SWAP.HIVE) balance
@@ -289,7 +274,7 @@ def buy_he_tokens_for_all_accounts(
                 use_amount = max_swap_hive_amount
 
             # Get market data for the token we want to buy
-            _, lowest_ask = get_market_price(market, token_symbol)
+            _, lowest_ask = account_trader.get_market_price(token_symbol)
             if lowest_ask <= 0:
                 logger.warning(f"[{account_name}] No sellers for {token_symbol}, skipping.")
                 continue
@@ -301,13 +286,10 @@ def buy_he_tokens_for_all_accounts(
             )
 
             # Execute the buy
-            if buy_token(
-                market,
-                account_name,
+            if account_trader.buy_token(
                 token_symbol,
                 buy_amount,
                 lowest_ask,
-                dry_run,
             ):
                 if dry_run:
                     logger.info(
@@ -395,6 +377,7 @@ def main() -> None:
         help="Enable debug logging",
     )
     parser.add_argument(
+        "-o",
         "--operation",
         choices=["sell", "buy"],
         default="sell",
@@ -443,7 +426,7 @@ def main() -> None:
 
     # Execute the requested operation
     operation = args.operation
-    
+
     if operation == "sell":
         logger.info("Operation mode: Selling tokens for SWAP.HIVE")
         sell_he_tokens_for_all_accounts(
@@ -463,11 +446,11 @@ def main() -> None:
         if args.all_tokens:
             logger.error("The --all-tokens flag is not supported for buy operations")
             sys.exit(1)
-            
+
         if not args.token:
             logger.error("The --token flag is required for buy operations")
             sys.exit(1)
-            
+
         logger.info("Operation mode: Buying tokens with SWAP.HIVE")
         buy_he_tokens_for_all_accounts(
             accounts,

@@ -107,19 +107,24 @@ class HiveTrader:
             low_ask = float(ticker["lowest_ask"]["price"])
             buy_amount = available_hbd / low_ask
             logger.info(
-                f"[{account_name}] Selling {available_hbd:.3f} HBD for {buy_amount:.3f} HIVE at {low_ask:.3f} HBD/HIVE."
+                f"[{account_name}] Selling {available_hbd:.6f} HBD for {buy_amount:.6f} HIVE at {low_ask:.8f} HBD/HIVE."
             )
+
+            # Format values for consistent display
+            formatted_hbd = f"{available_hbd:.6f}"
+            formatted_hive = f"{buy_amount:.6f}"
+            formatted_price = f"{low_ask:.8f}"
 
             # Execute the market buy (selling HBD for HIVE)
             tx = self.market.buy(low_ask, buy_amount, account=account_name)
 
             if self.hive.nobroadcast:
                 logger.info(
-                    f"[{account_name}] [DRY RUN] Would have bought {buy_amount:.3f} HIVE with {available_hbd:.3f} HBD."
+                    f"[{account_name}] [DRY RUN] Would have bought {formatted_hive} HIVE with {formatted_hbd} HBD at {formatted_price} HBD/HIVE."
                 )
                 logger.debug(f"[DRY RUN] Transaction details: {tx}")
             else:
-                logger.info(f"[{account_name}] Market buy order placed successfully.")
+                logger.info(f"[{account_name}] Market buy order placed successfully for {formatted_hive} HIVE with {formatted_hbd} HBD.")
                 logger.debug(f"Transaction details: {tx}")
             return True
 
@@ -170,19 +175,24 @@ class HiveTrader:
             sell_amount = available_hive
             buy_hbd_amount = available_hive * high_bid
             logger.info(
-                f"[{account_name}] Buying {buy_hbd_amount:.3f} HBD with {sell_amount:.3f} HIVE at {high_bid:.3f} HBD/HIVE."
+                f"[{account_name}] Buying {buy_hbd_amount:.6f} HBD with {sell_amount:.6f} HIVE at {high_bid:.8f} HBD/HIVE."
             )
+
+            # Format values for consistent display
+            formatted_hbd = f"{buy_hbd_amount:.6f}"
+            formatted_hive = f"{sell_amount:.6f}"
+            formatted_price = f"{high_bid:.8f}"
 
             # Execute the market sell (selling HIVE for HBD)
             tx = self.market.sell(high_bid, sell_amount, account=account_name)
 
             if self.hive.nobroadcast:
                 logger.info(
-                    f"[{account_name}] [DRY RUN] Would have bought {buy_hbd_amount:.3f} HBD with {sell_amount:.3f} HIVE."
+                    f"[{account_name}] [DRY RUN] Would have bought {formatted_hbd} HBD with {formatted_hive} HIVE at {formatted_price} HBD/HIVE."
                 )
                 logger.debug(f"[DRY RUN] Transaction details: {tx}")
             else:
-                logger.info(f"[{account_name}] Market sell order placed successfully.")
+                logger.info(f"[{account_name}] Market sell order placed successfully for {formatted_hbd} HBD with {formatted_hive} HIVE.")
                 logger.debug(f"Transaction details: {tx}")
             return True
 
