@@ -7,12 +7,12 @@ Automate market operations for multiple Hive accounts using a single authority a
 
 ## Features
 
-- Sell HBD for HIVE on the internal Hive market
-- Sell tokens on the Hive-Engine sidechain market
+- Buy/Sell HBD for HIVE on the internal Hive market
+- Buy/Sell tokens on the Hive-Engine sidechain market
 - Process multiple accounts using a single active key
 - Sell specific tokens or all non-whitelisted tokens
 - Configure token whitelist in the YAML configuration file
-- Set minimum and maximum amounts to sell
+- Set minimum and maximum amounts for trading
 - Dry-run mode to simulate transactions without broadcasting
 - Detailed logging with debug option
 
@@ -21,35 +21,37 @@ Automate market operations for multiple Hive accounts using a single authority a
 ### hive-market
 
 ```bash
-hive-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] [--min-hbd-amount AMOUNT] [--max-hbd AMOUNT]
+hive-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] [--min-hbd-amount AMOUNT] [--max-hbd AMOUNT] [--operation MODE]
 ```
 
 | Argument              | Type  | Description                                                                        |
 | --------------------- | ----- | ---------------------------------------------------------------------------------- |
 | `-k/--active-key`     | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML. |
 | `-d/--debug`          | flag  | Enable debug logging.                                                              |
-| `--dry-run`           | flag  | Simulate selling without broadcasting transactions.                                |
+| `--dry-run`           | flag  | Simulate trading without broadcasting transactions.                                |
 | `-a/--accounts`       | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.      |
-| `-m/--min-hbd-amount` | float | Minimum HBD amount to trigger a sell (default: 0.001 HBD).                         |
-| `-x/--max-hbd`        | float | Maximum HBD to sell in one run (default: no limit).                                |
+| `-m/--min-hbd-amount` | float | Minimum HBD amount to trigger a trade (default: 0.001 HBD).                        |
+| `-x/--max-hbd`        | float | Maximum HBD to trade in one run (default: no limit).                               |
+| `-o/--operation`      | str   | Trading operation mode: 'sell' (default) or 'buy'.                                 |
 
 ### engine-market
 
 ```bash
-engine-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] [--token SYMBOL] [--all-tokens] [--min-amount AMOUNT] [--max-amount AMOUNT] [--target TOKEN]
+engine-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] [--token SYMBOL] [--all-tokens] [--min-amount AMOUNT] [--max-amount AMOUNT] [--target TOKEN] [--operation MODE]
 ```
 
 | Argument          | Type  | Description                                                                        |
 | ----------------- | ----- | ---------------------------------------------------------------------------------- |
 | `-k/--active-key` | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML. |
 | `-d/--debug`      | flag  | Enable debug logging.                                                              |
-| `--dry-run`       | flag  | Simulate selling without broadcasting transactions.                                |
+| `--dry-run`       | flag  | Simulate trading without broadcasting transactions.                                |
 | `-a/--accounts`   | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.      |
-| `-t/--token`      | str   | Token symbol to sell (e.g., LEO, POB). Not required if --all-tokens is used.       |
-| `-A/--all-tokens` | flag  | Sell all tokens except those in the whitelist.                                     |
-| `-m/--min-amount` | float | Minimum token amount to trigger a sell (default: 0.00001).                         |
-| `-x/--max-amount` | float | Maximum token amount to sell in one run (default: no limit).                       |
-| `--target`        | str   | Target token to sell for (default: SWAP.HIVE).                                     |
+| `-t/--token`      | str   | Token symbol to trade (e.g., LEO, POB). Not required if --all-tokens is used.      |
+| `-A/--all-tokens` | flag  | Sell all tokens except those in the whitelist (only for sell operation).           |
+| `-m/--min-amount` | float | Minimum token amount to trigger a trade (default: 0.00001).                        |
+| `-x/--max-amount` | float | Maximum token amount to trade in one run (default: no limit).                      |
+| `--target`        | str   | Target token to trade with (default: SWAP.HIVE).                                   |
+| `-o/--operation`  | str   | Trading operation mode: 'sell' (default) or 'buy'.                                 |
 
 ## 🛠️ Installation
 
@@ -97,20 +99,23 @@ whitelist:
 
 ## 💃 Usage Examples
 
-### Selling HBD for HIVE
+### Trading HBD for HIVE
 
 After installation, you can use either the command-line scripts or the Python modules directly.
 
 #### Using Command-line Scripts
 
 ```bash
-# Basic usage (will use accounts.yaml in current directory)
-hive-market --active-key YOUR_ACTIVE_KEY
+# Basic usage - selling HBD for HIVE (will use accounts.yaml in current directory)
+hive-market --active-key YOUR_ACTIVE_KEY --operation sell
 
-# Specify minimum HBD amount to trigger a sell
+# Basic usage - buying HBD with HIVE
+hive-market --active-key YOUR_ACTIVE_KEY --operation buy
+
+# Specify minimum HBD amount to trigger a trade
 hive-market --min-hbd-amount 10.0
 
-# Specify maximum HBD to sell in one run
+# Specify maximum HBD to trade in one run
 hive-market --max-hbd 100.0
 
 # Dry run (simulate without broadcasting)
@@ -130,18 +135,21 @@ hive-market --debug
 python -m auto_market.main --active-key YOUR_ACTIVE_KEY
 ```
 
-### Selling Hive-Engine Tokens
+### Trading Hive-Engine Tokens
 
 #### Using Command-line Scripts
 
 ```bash
 # Sell a specific token
-engine-market --token LEO --min-amount 1.0
+engine-market --token LEO --min-amount 1.0 --operation sell
+
+# Buy a specific token
+engine-market --token LEO --min-amount 1.0 --operation buy
 
 # Sell all non-whitelisted tokens
-engine-market --all-tokens
+engine-market --all-tokens --operation sell
 
-# Specify target token to sell for (default is SWAP.HIVE)
+# Specify target token to trade with (default is SWAP.HIVE)
 engine-market --token CTP --target SWAP.BTC
 
 # Dry run (simulate without broadcasting)
@@ -155,10 +163,13 @@ engine-market --all-tokens --accounts /path/to/your/config.yaml
 
 ```bash
 # Sell a specific token
-python -m auto_market.he_market --token LEO
+python -m auto_market.he_market --token LEO --operation sell
+
+# Buy a specific token
+python -m auto_market.he_market --token LEO --operation buy
 
 # Sell all non-whitelisted tokens
-python -m auto_market.he_market --all-tokens
+python -m auto_market.he_market --all-tokens --operation sell
 ```
 
 ## 🔐 Security
