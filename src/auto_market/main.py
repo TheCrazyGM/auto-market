@@ -63,7 +63,6 @@ def sell_hbd_for_all_accounts(
         from nectar.account import Account
         from nectar.market import Market
 
-        main_account = Account(main_account_name, blockchain_instance=hive)
         market = Market("HIVE:HBD", blockchain_instance=hive)
     except Exception as e:
         logger.error(f"Error loading main account {main_account_name}: {e}")
@@ -115,10 +114,10 @@ def sell_hbd_for_all_accounts(
                 success_count += 1
             else:
                 logger.debug(
-                    f"Calling main_account.market.buy({low_ask}, {buy_amount}, account={account_name})..."
+                    f"Calling market.buy({low_ask}, {buy_amount}, account={account_name})..."
                 )
-                # Use the main account's authority to execute the market buy
-                main_account.market.buy(low_ask, buy_amount, account=account_name)
+                # Use the market instance with the account name
+                market.buy(low_ask, buy_amount, account=account_name)
                 logger.info(
                     f"[{account_name}] HBD sold successfully using authority of {main_account_name}."
                 )
@@ -172,7 +171,6 @@ def buy_hbd_for_all_accounts(
         from nectar.account import Account
         from nectar.market import Market
 
-        main_account = Account(main_account_name, blockchain_instance=hive)
         market = Market("HIVE:HBD", blockchain_instance=hive)
     except Exception as e:
         logger.error(f"Error loading main account {main_account_name}: {e}")
@@ -200,25 +198,25 @@ def buy_hbd_for_all_accounts(
                 )
                 continue
 
-            # Calculate how much HIVE to use
+            # Calculate available HIVE to use
             available_hive = float(hive_balance.amount)
             if max_hive is not None and available_hive > max_hive:
                 logger.info(
-                    f"[{account_name}] Limiting HIVE to use from {available_hive:.3f} to max_hive={max_hive:.3f}"
+                    f"[{account_name}] Limiting HIVE to use from {available_hive} to max_hive={max_hive}"
                 )
                 available_hive = max_hive
 
             # Get market data and calculate HBD to buy
             ticker = market.ticker()
             high_bid = float(ticker["highest_bid"]["price"])
-            buy_hbd_amount = available_hive * high_bid
+            buy_amount = available_hive * high_bid
             logger.info(
-                f"[{account_name}] Buying {buy_hbd_amount:.3f} HBD with {available_hive:.3f} HIVE at {high_bid:.3f} HBD/HIVE."
+                f"[{account_name}] Buying {buy_amount:.3f} HBD with {available_hive:.3f} HIVE at {high_bid:.3f} HBD/HIVE."
             )
 
             if dry_run:
                 logger.info(
-                    f"[DRY RUN] Would buy {buy_hbd_amount:.3f} HBD for {account_name} using authority of {main_account_name}."
+                    f"[DRY RUN] Would buy {buy_amount:.3f} HBD for {account_name} using authority of {main_account_name}."
                 )
                 logger.debug(
                     f"[DRY RUN] market.sell({high_bid}, {available_hive}, account={account_name}) would be called here."
@@ -226,10 +224,10 @@ def buy_hbd_for_all_accounts(
                 success_count += 1
             else:
                 logger.debug(
-                    f"Calling main_account.market.sell({high_bid}, {available_hive}, account={account_name})..."
+                    f"Calling market.sell({high_bid}, {available_hive}, account={account_name})..."
                 )
-                # Use the main account's authority to execute the market sell
-                main_account.market.sell(high_bid, available_hive, account=account_name)
+                # Use the market instance with the account name
+                market.sell(high_bid, available_hive, account=account_name)
                 logger.info(
                     f"[{account_name}] HBD bought successfully using authority of {main_account_name}."
                 )
