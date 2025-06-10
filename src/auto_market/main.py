@@ -9,7 +9,7 @@ Features:
 - Loops through a list of Hive accounts and trades HBD/HIVE if their balance is above the minimum threshold.
 - Supports both selling HBD for HIVE and buying HBD with HIVE.
 - Uses the authority of the main account (the one whose active key is provided) for all listed accounts.
-- Provides informative logging and robust error handling.
+- Provides colorful Rich-based logging and robust error handling.
 - Supports dry-run mode to simulate transactions without broadcasting.
 - Allows setting minimum and maximum amounts to trade.
 

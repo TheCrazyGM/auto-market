@@ -19,6 +19,7 @@ dependencies = [
   "hive-nectar",
   "nectarengine",
   "pyyaml",
+  "rich",
 ]
 
 [project.urls]

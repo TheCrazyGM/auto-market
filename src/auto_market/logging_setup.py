@@ -4,13 +4,15 @@ Provides consistent logging setup across all modules.
 """
 
 import logging
-import sys
 from typing import Optional
+
+from rich.logging import RichHandler
+from rich.traceback import install as install_rich_traceback
 
 
 def setup_logging(level: Optional[int] = None) -> logging.Logger:
     """
-    Configure logging for the application.
+    Configure logging for the application using Rich for colorful console output and enhanced tracebacks.
 
     Args:
         level: Optional logging level to set. If None, defaults to INFO.
@@ -18,18 +20,21 @@ def setup_logging(level: Optional[int] = None) -> logging.Logger:
     Returns:
         The configured logger instance.
     """
-    # Get the root logger
-    logger = logging.getLogger()
+    # Enable rich traceback for nicer exception traces
+    install_rich_traceback(show_locals=True)
 
-    # Clear any existing handlers
+    # Get the root logger and clear existing handlers
+    logger = logging.getLogger()
     for handler in logger.handlers:
         logger.removeHandler(handler)
 
-    # Set up basic configuration
+    # Configure logging to use RichHandler for colorful console output
+    level = level or logging.INFO
     logging.basicConfig(
-        level=level or logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
+        level=level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True)],
     )
 
     return logger

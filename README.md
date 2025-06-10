@@ -14,7 +14,7 @@ Automate market operations for multiple Hive accounts using a single authority a
 - Configure token whitelist in the YAML configuration file
 - Set minimum and maximum amounts for trading
 - Dry-run mode to simulate transactions without broadcasting
-- Detailed logging with debug option
+- Colored logging and console output with Rich (detailed logging with debug option)
 
 ## Command-line Arguments
 

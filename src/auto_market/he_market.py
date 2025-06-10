@@ -9,7 +9,7 @@ Features:
 - Fetches token balances from Hive-Engine for each account.
 - Sells or buys specified tokens at the current market price.
 - Uses the authority of the main account (the one whose active key is provided).
-- Provides informative logging and robust error handling.
+- Provides colorful Rich-based logging and robust error handling.
 - Supports dry-run mode to simulate trades without broadcasting.
 
 Author: thecrazygm
