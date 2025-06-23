@@ -17,7 +17,7 @@ generate-versions:
 	python3 generate_versions.py
 
 lint:
-	uv run ruff check src 
+	uv run ruff check src
 
 format:
 	uv run ruff format src
