@@ -10,6 +10,7 @@ from typing import List, Optional, Tuple
 
 from nectar import Hive
 from nectarengine.market import Market
+from nectarengine.tokenobject import Token as HeToken
 from nectarengine.wallet import Wallet as HeWallet
 
 logger = logging.getLogger(__name__)
@@ -295,4 +296,43 @@ class HiveEngineTrader:
             return True
         except Exception as e:
             logger.error(f"Error transferring {symbol}: {e}")
+            return False
+
+    def is_token_stakeable(self, symbol: str) -> bool:
+        """Check if a token supports staking."""
+        try:
+            info = HeToken(symbol=symbol).get_info()
+            return info.get("stakingEnabled", False)
+        except Exception as e:
+            logger.error(f"Error retrieving staking info for {symbol}: {e}")
+            return False
+
+    def stake_token(self, symbol: str, amount: float) -> bool:
+        """Stake a token on Hive-Engine respecting min/max thresholds and dry-run."""
+        try:
+            if not self.is_token_stakeable(symbol):
+                logger.info(f"[{self.account_name}] {symbol} is not stakeable")
+                return False
+
+            if amount < self.min_token_amount:
+                logger.debug(
+                    f"[{self.account_name}] {symbol} balance {amount:.6f} below minimum stake amount"
+                )
+                return False
+
+            if self.max_token_amount and amount > self.max_token_amount:
+                amount = self.max_token_amount
+
+            logger.info(f"[{self.account_name}] Staking {amount:.6f} {symbol}")
+
+            if self.dry_run:
+                logger.info(f"[DRY RUN] Would stake {amount:.6f} {symbol}")
+                return True
+
+            # Wallet.stake(amount, symbol)
+            self.wallet.stake(amount, symbol)
+            time.sleep(2)
+            return True
+        except Exception as e:
+            logger.error(f"Error staking {symbol}: {e}")
             return False

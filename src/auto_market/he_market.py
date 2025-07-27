@@ -193,6 +193,86 @@ def sell_he_tokens_for_all_accounts(
     )
 
 
+def stake_he_tokens_for_all_accounts(
+    accounts: List[str],
+    main_account_name: str,
+    active_key: str,
+    token_symbol: str,
+    min_token_amount: float,
+    max_token_amount: Optional[float] = None,
+    target_token: str = "SWAP.HIVE",
+    stake_all: bool = False,
+    whitelist: Optional[List[str]] = None,
+    dry_run: bool = False,
+) -> None:
+    """Stake Hive-Engine tokens for all accounts.
+
+    Args:
+        accounts: list of account names.
+        main_account_name: authority account.
+        active_key: active key.
+        token_symbol: token to stake when stake_all is False.
+        min_token_amount: minimum amount to trigger staking.
+        max_token_amount: maximum amount per transaction.
+        target_token: unused, kept for signature consistency.
+        stake_all: if True stake all stakeable tokens except whitelist.
+        whitelist: tokens to skip when staking all.
+        dry_run: simulate only.
+    """
+    if stake_all:
+        logger.info(
+            f"Staking ALL stakeable non-whitelisted tokens for {len(accounts)} accounts using {main_account_name} authority"
+        )
+        if whitelist:
+            logger.debug(f"Whitelist: {whitelist}")
+    else:
+        logger.info(
+            f"Staking {token_symbol} tokens for {len(accounts)} accounts using {main_account_name} authority"
+        )
+
+    # Connect to Hive
+    try:
+        hive = connect_to_hive(active_key, dry_run)
+    except Exception as e:
+        logger.error(f"Failed to connect to Hive blockchain: {e}")
+        return
+
+    success_count = 0
+    processed_accounts = 0
+    for account_name in accounts:
+        try:
+            account_trader = HiveEngineTrader(
+                hive, account_name, min_token_amount, max_token_amount
+            )
+            tokens = account_trader.get_token_balances()
+            logger.debug(f"[{account_name}] Retrieved {len(tokens)} token balances")
+
+            # Filter tokens to process
+            if stake_all:
+                candidate_tokens = [
+                    t for t in tokens if t.symbol.upper() not in (whitelist or [])
+                ]
+            else:
+                candidate_tokens = [
+                    t for t in tokens if t.symbol.upper() == token_symbol.upper()
+                ]
+
+            for tok in candidate_tokens:
+                amount = tok.balance
+                if account_trader.stake_token(tok.symbol, amount):
+                    success_count += 1
+                    processed_accounts += 1
+        except Exception as e:
+            logger.error(f"Error processing account {account_name}: {type(e).__name__}: {e}")
+            logger.debug(traceback.format_exc())
+
+    logger.info(
+        f"Successfully staked {success_count} token balances across {processed_accounts} accounts"
+    )
+
+
+# ---------------- Existing buy function below ----------------
+
 def buy_he_tokens_for_all_accounts(
     accounts: List[str],
     main_account_name: str,
@@ -385,9 +465,9 @@ def main() -> None:
     parser.add_argument(
         "-o",
         "--operation",
-        choices=["sell", "buy"],
+        choices=["sell", "buy", "stake"],
         default="sell",
-        help="Operation mode: 'sell' tokens for SWAP.HIVE or 'buy' tokens with SWAP.HIVE (default: sell)",
+        help="Operation mode: 'sell' tokens for SWAP.HIVE, 'buy' tokens with SWAP.HIVE, or 'stake' tokens (default: sell)",
     )
     parser.add_argument(
         "--dry-run",
@@ -447,7 +527,7 @@ def main() -> None:
             whitelist=whitelist,
             dry_run=args.dry_run,
         )
-    else:  # operation == "buy"
+    elif operation == "buy":
         # For buy operations, we don't support the --all-tokens flag
         if args.all_tokens:
             logger.error("The --all-tokens flag is not supported for buy operations")
@@ -466,6 +546,25 @@ def main() -> None:
             args.min_amount,
             args.max_amount,
             args.target,
+            dry_run=args.dry_run,
+        )
+    elif operation == "stake":
+        # For stake, either token or all tokens supported
+        if not args.all_tokens and not args.token:
+            logger.error("Either --token or --all-tokens must be specified for stake operations")
+            sys.exit(1)
+
+        logger.info("Operation mode: Staking tokens")
+        stake_he_tokens_for_all_accounts(
+            accounts,
+            main_account_name,
+            active_key,
+            token_symbol,
+            args.min_amount,
+            args.max_amount,
+            args.target,
+            stake_all=args.all_tokens,
+            whitelist=whitelist,
             dry_run=args.dry_run,
         )
 
