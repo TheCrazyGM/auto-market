@@ -41,11 +41,11 @@ requires-dist = [
 
 [[package]]
 name = "certifi"
-version = "2025.6.15"
+version = "2025.7.14"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/73/f7/f14b46d4bcd21092d7d3ccef689615220d8a08fb25e564b65d20738e672e/certifi-2025.6.15.tar.gz", hash = "sha256:d747aa5a8b9bbbb1bb8c22bb13e22bd1f18e9796defa16bab421f7f7a317323b", size = 158753, upload-time = "2025-06-15T02:45:51.329Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995", size = 163981, upload-time = "2025-07-14T03:29:28.449Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/ae/320161bd181fc06471eed047ecce67b693fd7515b16d495d8932db763426/certifi-2025.6.15-py3-none-any.whl", hash = "sha256:2e0c7ce7cb5d8f8634ca55d2ba7e6ec2689a2fd6537d8dec1296a477a4910057", size = 157650, upload-time = "2025-06-15T02:45:49.977Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2", size = 162722, upload-time = "2025-07-14T03:29:26.863Z" },
 ]
 
 [[package]]
@@ -139,7 +139,7 @@ wheels = [
 
 [[package]]
 name = "hive-nectar"
-version = "0.0.7"
+version = "0.0.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -156,9 +156,9 @@ dependencies = [
     { name = "types-requests" },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/32/c3/e8133ca686858495d8547a278c98cca3bbc75f1f2139e177e11ad125f53f/hive_nectar-0.0.7.tar.gz", hash = "sha256:a30520f4d04785dc6552d59027e42a93d92589c710c9329f5299189c4274e8e7", size = 647460, upload-time = "2025-05-04T09:13:10.467Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/27/992cc3f6b87deb566cc3731098ad46295f191c355720b957d3827a9ecbba/hive_nectar-0.0.11.tar.gz", hash = "sha256:08eb9428dabb47197979b7a6bbe8b8cbb233a38fe459e3472cacc4b32a94e4a7", size = 653922, upload-time = "2025-07-25T17:51:05.151Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/67/2435d5aa4fabfe5c136457ba1be636b1c4d3f9433185c1211baab713f6c8/hive_nectar-0.0.7-py3-none-any.whl", hash = "sha256:2e33517fcd09d9ae136af87908ca31a4e6bccffffc6012b56b16650b5f2b3d75", size = 408007, upload-time = "2025-05-04T09:13:08.74Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/fb/d8e5328cbd2c1a7578d51fe6f9b935c2ba4000b44090cd359b6aef0d116f/hive_nectar-0.0.11-py3-none-any.whl", hash = "sha256:80d4b3877beb2edf2c934649d0ffb4f6fa09a85d61fa545753ac16f359fa886c", size = 410869, upload-time = "2025-07-25T17:51:03.198Z" },
 ]
 
 [[package]]
@@ -193,15 +193,15 @@ wheels = [
 
 [[package]]
 name = "nectarengine"
-version = "0.0.9"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hive-nectar" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/18/f5/db71c7b1e4bbaddf3cc4af210db045d434ddd4e016b815489d0adb91399d/nectarengine-0.0.9.tar.gz", hash = "sha256:cceb05a1c67c5e84c7ca041d27e310681a27c782f0f7b0702d719755a3f223a5", size = 74111, upload-time = "2025-06-08T11:36:36.306Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/b7/af75ad96ec2d9619804fa9741bb84f8b777b97159d7fa51c7078ffaffecf/nectarengine-0.1.1.tar.gz", hash = "sha256:6a4bf9585ee7ce07d49d61a119a40167d67d5bec30b963574c13a486dec68a40", size = 75916, upload-time = "2025-07-14T15:05:44.238Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/ac/a6ed7d7b02c8f2d75dee7b9b575df3dfe0c1d1bf813112fc88f3c2f3840f/nectarengine-0.0.9-py3-none-any.whl", hash = "sha256:bae94bdba807490265bed134f414a9152f6cf78384f24324bd746e7190bf9540", size = 35072, upload-time = "2025-06-08T11:36:35.297Z" },
+    { url = "https://files.pythonhosted.org/packages/45/86/a2823aee6b92afa3de10d4331571e9eafc495bbe1de2401afd2ee42f6a54/nectarengine-0.1.1-py3-none-any.whl", hash = "sha256:3fda78336dea1a06f2798ebfd3700bc7fc1ec511946d99ac23a870d0e737f928", size = 36858, upload-time = "2025-07-14T15:05:43.33Z" },
 ]
 
 [[package]]
@@ -298,15 +298,15 @@ wheels = [
 
 [[package]]
 name = "rich"
-version = "14.0.0"
+version = "14.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/53/830aa4c3066a8ab0ae9a9955976fb770fe9c6102117c8ec4ab3ea62d89e8/rich-14.0.0.tar.gz", hash = "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725", size = 224078, upload-time = "2025-03-30T14:15:14.23Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/75/af448d8e52bf1d8fa6a9d089ca6c07ff4453d86c65c145d0a300bb073b9b/rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8", size = 224441, upload-time = "2025-07-25T07:32:58.125Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/9b/63f4c7ebc259242c89b3acafdb37b41d1185c07ff0011164674e9076b491/rich-14.0.0-py3-none-any.whl", hash = "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0", size = 243229, upload-time = "2025-03-30T14:15:12.283Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/30/3c4d035596d3cf444529e0b2953ad0466f6049528a879d27534700580395/rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f", size = 243368, upload-time = "2025-07-25T07:32:56.73Z" },
 ]
 
 [[package]]
