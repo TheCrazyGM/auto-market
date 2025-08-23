@@ -22,7 +22,7 @@ import traceback
 from typing import List
 
 from auto_market.config import get_active_key, load_accounts_and_active_key
-from auto_market.hive_client import connect_to_hive
+from auto_market.hive_client import connect_to_hive, powerup_hive, stake_hbd
 from auto_market.logging_setup import set_debug_logging, setup_logging
 
 # Set up logging
@@ -133,6 +133,75 @@ def sell_hbd_for_all_accounts(
                 )
             except Exception:
                 logger.debug(f"Could not retrieve account JSON for {account_name}")
+
+    logger.info(f"Successfully processed {success_count} out of {len(accounts)} accounts")
+
+
+def stake_hbd_for_all_accounts(
+    accounts: List[str],
+    main_account_name: str,
+    active_key: str,
+    min_hbd_amount: float,
+    max_hbd_amount: float = None,
+    memo: str = "auto to savings",
+    dry_run: bool = False,
+) -> None:
+    """
+    Move HBD to savings for all accounts using the authority of the main account.
+    """
+    logger.info(
+        f"Staking HBD to savings for {len(accounts)} accounts using {main_account_name} authority"
+    )
+
+    try:
+        hive = connect_to_hive(active_key, dry_run)
+    except Exception as e:
+        logger.error(f"Failed to connect to Hive blockchain: {e}")
+        return
+
+    success_count = 0
+    for account_name in accounts:
+        try:
+            logger.debug(f"Processing account: {account_name}")
+            if stake_hbd(hive, account_name, min_hbd_amount, max_hbd_amount, memo):
+                success_count += 1
+        except Exception as e:
+            logger.error(f"Error processing account {account_name}: {type(e).__name__}: {e}")
+            logger.debug(traceback.format_exc())
+
+    logger.info(f"Successfully processed {success_count} out of {len(accounts)} accounts")
+
+
+def powerup_hive_for_all_accounts(
+    accounts: List[str],
+    main_account_name: str,
+    active_key: str,
+    min_hive_amount: float,
+    max_hive_amount: float = None,
+    dry_run: bool = False,
+) -> None:
+    """
+    Power up HIVE to vesting for all accounts using the authority of the main account.
+    """
+    logger.info(
+        f"Powering up HIVE for {len(accounts)} accounts using {main_account_name} authority"
+    )
+
+    try:
+        hive = connect_to_hive(active_key, dry_run)
+    except Exception as e:
+        logger.error(f"Failed to connect to Hive blockchain: {e}")
+        return
+
+    success_count = 0
+    for account_name in accounts:
+        try:
+            logger.debug(f"Processing account: {account_name}")
+            if powerup_hive(hive, account_name, min_hive_amount, max_hive_amount):
+                success_count += 1
+        except Exception as e:
+            logger.error(f"Error processing account {account_name}: {type(e).__name__}: {e}")
+            logger.debug(traceback.format_exc())
 
     logger.info(f"Successfully processed {success_count} out of {len(accounts)} accounts")
 
@@ -281,9 +350,11 @@ def main() -> None:
     parser.add_argument(
         "-o",
         "--operation",
-        choices=["sell", "buy"],
+        choices=["sell", "buy", "stake", "powerup"],
         default="sell",
-        help="Operation mode: 'sell' HBD for HIVE or 'buy' HBD with HIVE (default: sell)",
+        help=(
+            "Operation mode: 'sell' HBD for HIVE, 'buy' HBD with HIVE, 'stake' HBD to savings, or 'powerup' HIVE to vesting (default: sell)"
+        ),
     )
     parser.add_argument(
         "-m",
@@ -298,6 +369,11 @@ def main() -> None:
         type=float,
         default=None,
         help="Maximum amount to trade in one run (default: no limit)",
+    )
+    parser.add_argument(
+        "--memo",
+        default="auto to savings",
+        help="Memo for staking HBD to savings (only used with operation=stake)",
     )
     args = parser.parse_args()
 
@@ -332,9 +408,25 @@ def main() -> None:
         sell_hbd_for_all_accounts(
             accounts, authority_account, active_key, min_amount, max_amount, dry_run=dry_run
         )
-    else:  # operation == "buy"
+    elif operation == "buy":
         logger.info("Operation mode: Buying HBD with HIVE")
         buy_hbd_for_all_accounts(
+            accounts, authority_account, active_key, min_amount, max_amount, dry_run=dry_run
+        )
+    elif operation == "stake":
+        logger.info("Operation mode: Staking HBD to savings")
+        stake_hbd_for_all_accounts(
+            accounts,
+            authority_account,
+            active_key,
+            min_amount,
+            max_amount,
+            memo=args.memo,
+            dry_run=dry_run,
+        )
+    else:  # powerup
+        logger.info("Operation mode: Powering up HIVE to vesting")
+        powerup_hive_for_all_accounts(
             accounts, authority_account, active_key, min_amount, max_amount, dry_run=dry_run
         )
 

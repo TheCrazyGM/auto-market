@@ -2,12 +2,14 @@
 
 Automate market operations for multiple Hive accounts using a single authority account. This package provides two command-line tools:
 
-- `hive-market`: Sell HBD for HIVE on the internal Hive blockchain market
+- `hive-market`: Trade HBD/HIVE on the internal market, plus stake HBD to savings and power up HIVE
 - `engine-market`: Sell tokens on the Hive-Engine sidechain market
 
 ## Features
 
 - Buy/Sell HBD for HIVE on the internal Hive market
+- Stake HBD to Savings (move HBD to savings)
+- Power Up HIVE to Vesting (convert liquid HIVE to HP)
 - Buy/Sell tokens on the Hive-Engine sidechain market
 - Process multiple accounts using a single active key
 - Sell specific tokens or all non-whitelisted tokens
@@ -21,18 +23,21 @@ Automate market operations for multiple Hive accounts using a single authority a
 ### hive-market
 
 ```bash
-hive-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] [--min-hbd-amount AMOUNT] [--max-hbd AMOUNT] [--operation MODE]
+hive-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] \
+           [--min-amount AMOUNT] [--max-amount AMOUNT] \
+           [--operation {sell,buy,stake,powerup}] [--memo MEMO]
 ```
 
-| Argument              | Type  | Description                                                                        |
-| --------------------- | ----- | ---------------------------------------------------------------------------------- |
-| `-k/--active-key`     | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML. |
-| `-d/--debug`          | flag  | Enable debug logging.                                                              |
-| `--dry-run`           | flag  | Simulate trading without broadcasting transactions.                                |
-| `-a/--accounts`       | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.      |
-| `-m/--min-hbd-amount` | float | Minimum HBD amount to trigger a trade (default: 0.001 HBD).                        |
-| `-x/--max-hbd`        | float | Maximum HBD to trade in one run (default: no limit).                               |
-| `-o/--operation`      | str   | Trading operation mode: 'sell' (default) or 'buy'.                                 |
+| Argument            | Type  | Description                                                                                 |
+| ------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| `-k/--active-key`   | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML.          |
+| `-d/--debug`        | flag  | Enable debug logging.                                                                       |
+| `--dry-run`         | flag  | Simulate operations without broadcasting transactions.                                      |
+| `-a/--accounts`     | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.               |
+| `-m/--min-amount`   | float | Minimum amount threshold to trigger the operation (default: 0.001).                         |
+| `-x/--max-amount`   | float | Maximum amount to use in one run (default: no limit).                                       |
+| `-o/--operation`    | str   | Operation mode: `sell`, `buy`, `stake` (HBD to savings), or `powerup` (HIVE to vesting).    |
+| `--memo`            | str   | Memo for staking to savings (used only with `--operation stake`).                           |
 
 ### engine-market
 
@@ -99,36 +104,39 @@ whitelist:
 
 ## 💃 Usage Examples
 
-### Trading HBD for HIVE
+### Trading HBD for HIVE and Account Ops
 
 After installation, you can use either the command-line scripts or the Python modules directly.
 
-#### Using Command-line Scripts
+#### Using Command-line Scripts (Hive)
 
 ```bash
-# Basic usage - selling HBD for HIVE (will use accounts.yaml in current directory)
+# Sell HBD for HIVE (uses accounts.yaml by default)
 hive-market --active-key YOUR_ACTIVE_KEY --operation sell
 
-# Basic usage - buying HBD with HIVE
+# Buy HBD with HIVE
 hive-market --active-key YOUR_ACTIVE_KEY --operation buy
 
-# Specify minimum HBD amount to trigger a trade
-hive-market --min-hbd-amount 10.0
+# Stake HBD to savings for each account (with memo)
+hive-market --active-key YOUR_ACTIVE_KEY --operation stake --memo "auto to savings"
 
-# Specify maximum HBD to trade in one run
-hive-market --max-hbd 100.0
+# Power up available HIVE to vesting (HP) for each account
+hive-market --active-key YOUR_ACTIVE_KEY --operation powerup
+
+# Minimum and maximum thresholds (applies to sell/buy/stake/powerup accordingly)
+hive-market --min-amount 10.0 --max-amount 100.0 --operation sell
 
 # Dry run (simulate without broadcasting)
-hive-market --dry-run
+hive-market --dry-run --operation powerup
 
 # Use a specific accounts configuration file
-hive-market --accounts /path/to/your/config.yaml
+hive-market --accounts /path/to/your/config.yaml --operation stake
 
 # Enable debug logging
-hive-market --debug
+hive-market --debug --operation buy
 ```
 
-#### Using Python Modules
+#### Using Python Modules (Hive)
 
 ```bash
 # Basic usage
@@ -137,7 +145,7 @@ python -m auto_market.main --active-key YOUR_ACTIVE_KEY
 
 ### Trading Hive-Engine Tokens
 
-#### Using Command-line Scripts
+#### Using Command-line Scripts (Hive-Engine)
 
 ```bash
 # Sell a specific token
@@ -159,7 +167,7 @@ engine-market --token POB --dry-run
 engine-market --all-tokens --accounts /path/to/your/config.yaml
 ```
 
-#### Using Python Modules
+#### Using Python Modules (Hive-Engine)
 
 ```bash
 # Sell a specific token
@@ -194,7 +202,7 @@ auto-market/
 │       ├── he_client.py        # Hive-Engine blockchain operations
 │       ├── he_market.py        # Hive-Engine token selling script
 │       ├── logging_setup.py    # Logging configuration
-│       └── main.py             # HBD selling script
+│       └── main.py             # Hive CLI: trade HBD/HIVE, stake HBD to savings, power up HIVE
 ├── pyproject.toml
 ├── README.md
 └── ...
