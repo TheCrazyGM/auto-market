@@ -28,16 +28,16 @@ hive-market [--active-key ACTIVE_KEY] [--debug] [--dry-run] [--accounts PATH] \
            [--operation {sell,buy,stake,powerup}] [--memo MEMO]
 ```
 
-| Argument            | Type  | Description                                                                                 |
-| ------------------- | ----- | ------------------------------------------------------------------------------------------- |
-| `-k/--active-key`   | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML.          |
-| `-d/--debug`        | flag  | Enable debug logging.                                                                       |
-| `--dry-run`         | flag  | Simulate operations without broadcasting transactions.                                      |
-| `-a/--accounts`     | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.               |
-| `-m/--min-amount`   | float | Minimum amount threshold to trigger the operation (default: 0.001).                         |
-| `-x/--max-amount`   | float | Maximum amount to use in one run (default: no limit).                                       |
-| `-o/--operation`    | str   | Operation mode: `sell`, `buy`, `stake` (HBD to savings), or `powerup` (HIVE to vesting).    |
-| `--memo`            | str   | Memo for staking to savings (used only with `--operation stake`).                           |
+| Argument          | Type  | Description                                                                              |
+| ----------------- | ----- | ---------------------------------------------------------------------------------------- |
+| `-k/--active-key` | str   | Active key for the main account. If omitted, uses ACTIVE_WIF env variable or YAML.       |
+| `-d/--debug`      | flag  | Enable debug logging.                                                                    |
+| `--dry-run`       | flag  | Simulate operations without broadcasting transactions.                                   |
+| `-a/--accounts`   | str   | Path to YAML file with accounts and/or active key. Defaults to accounts.yaml.            |
+| `-m/--min-amount` | float | Minimum amount threshold to trigger the operation (default: 0.001).                      |
+| `-x/--max-amount` | float | Maximum amount to use in one run (default: no limit).                                    |
+| `-o/--operation`  | str   | Operation mode: `sell`, `buy`, `stake` (HBD to savings), or `powerup` (HIVE to vesting). |
+| `--memo`          | str   | Memo for staking to savings (used only with `--operation stake`).                        |
 
 ### engine-market
 
