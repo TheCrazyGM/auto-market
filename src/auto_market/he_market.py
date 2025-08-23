@@ -249,9 +249,17 @@ def stake_he_tokens_for_all_accounts(
 
             # Filter tokens to process
             if stake_all:
-                candidate_tokens = [t for t in tokens if t.symbol.upper() not in (whitelist or [])]
+                candidate_tokens = [
+                    t
+                    for t in tokens
+                    if t.symbol.upper() not in (whitelist or []) and t.balance > min_token_amount
+                ]
             else:
-                candidate_tokens = [t for t in tokens if t.symbol.upper() == token_symbol.upper()]
+                candidate_tokens = [
+                    t
+                    for t in tokens
+                    if t.symbol.upper() == token_symbol.upper() and t.balance > min_token_amount
+                ]
 
             for tok in candidate_tokens:
                 amount = tok.balance
