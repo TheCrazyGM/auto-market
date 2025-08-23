@@ -140,7 +140,7 @@ hive-market --debug --operation buy
 
 ```bash
 # Basic usage
-python -m auto_market.main --active-key YOUR_ACTIVE_KEY
+python -m auto_market.hive_market --active-key YOUR_ACTIVE_KEY
 ```
 
 ### Trading Hive-Engine Tokens
@@ -202,7 +202,7 @@ auto-market/
 │       ├── he_client.py        # Hive-Engine blockchain operations
 │       ├── he_market.py        # Hive-Engine token selling script
 │       ├── logging_setup.py    # Logging configuration
-│       └── main.py             # Hive CLI: trade HBD/HIVE, stake HBD to savings, power up HIVE
+│       └── hive_market.py      # Hive CLI: trade HBD/HIVE, stake HBD to savings, power up HIVE
 ├── pyproject.toml
 ├── README.md
 └── ...
