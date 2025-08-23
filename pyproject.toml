@@ -27,7 +27,7 @@ BugTracker = "https://github.com/thecrazygm/auto-market/issues"
 Homepage = "https://github.com/thecrazygm/auto-market"
 
 [project.scripts]
-hive-market = "auto_market.main:main"
+hive-market = "auto_market.hive_market:main"
 engine-market = "auto_market.he_market:main"
 
 [build-system]
