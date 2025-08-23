@@ -1,6 +1,6 @@
 [project]
 name = "auto-market"
-version = "0.0.4"
+version = "0.0.5"
 description = "Automatically sell tokens at market value for multiple Hive accounts using a single authority account"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -15,12 +15,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 
-dependencies = [
-  "hive-nectar",
-  "nectarengine",
-  "pyyaml",
-  "rich",
-]
+dependencies = ["hive-nectar", "nectarengine", "pyyaml", "rich"]
 
 [project.urls]
 BugTracker = "https://github.com/thecrazygm/auto-market/issues"
