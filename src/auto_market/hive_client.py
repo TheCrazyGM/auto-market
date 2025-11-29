@@ -9,7 +9,6 @@ from typing import Optional
 from nectar import Hive
 from nectar.account import Account
 from nectar.market import Market
-from nectar.nodelist import NodeList
 from nectar.wallet import Wallet
 
 logger = logging.getLogger(__name__)
@@ -31,13 +30,9 @@ def connect_to_hive(active_key: str, dry_run: bool = False) -> Hive:
         Exception: If connection fails.
     """
     try:
-        logger.debug("Initializing NodeList and updating nodes...")
-        nodelist = NodeList()
-        nodelist.update_nodes()
-        nodes = nodelist.get_hive_nodes()
-
-        logger.info(f"Connecting to Hive nodes: {nodes}")
-        hive = Hive(keys=[active_key], node=nodes, nobroadcast=dry_run)
+        logger.info("Connecting to Hive blockchain...")
+        # Let Hive handle node initialization internally to avoid duplicate beacon calls
+        hive = Hive(keys=[active_key], nobroadcast=dry_run)
         logger.info("Connected to Hive blockchain.")
         return hive
     except Exception as e:
