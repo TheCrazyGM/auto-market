@@ -15,12 +15,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 
-dependencies = [
-    "hive-nectar",
-    "nectarengine",
-    "pyyaml",
-    "rich",
-]
+dependencies = ["hive-nectar", "nectarengine", "pyyaml", "rich"]
 
 [project.urls]
 BugTracker = "https://github.com/thecrazygm/auto-market/issues"
@@ -68,6 +63,3 @@ exclude = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]
 "**/{tests,docs,tools}/*" = ["E402"]
-
-[tool.uv.sources]
-hive-nectar = { git = "https://github.com/thecrazygm/hive-nectar", rev = "v0.2.0" }
