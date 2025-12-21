@@ -267,37 +267,6 @@ class HiveEngineTrader:
             logger.error(f"Error buying {symbol}: {e}")
             return False
 
-    def transfer_token(
-        self, to_account: str, symbol: str, amount: float, memo: str = "Automatic transfer"
-    ) -> bool:
-        """
-        Transfer a token to another account.
-
-        Args:
-            to_account: The account to transfer to.
-            symbol: The token symbol to transfer.
-            amount: The amount to transfer.
-            memo: The memo to include with the transfer.
-
-        Returns:
-            True if the transfer was successful, False otherwise.
-        """
-        try:
-            logger.info(f"Transferring {amount:.6f} {symbol} to {to_account} with memo: {memo}")
-
-            if self.dry_run:
-                logger.info(
-                    f"[DRY RUN] Would transfer {amount:.6f} {symbol} to {to_account} with memo: {memo}"
-                )
-                return True
-
-            self.wallet.transfer(to_account, amount, symbol, memo=memo)
-            logger.info(f"Transferred {amount:.6f} {symbol} to {to_account}")
-            return True
-        except Exception as e:
-            logger.error(f"Error transferring {symbol}: {e}")
-            return False
-
     def is_token_stakeable(self, symbol: str) -> bool:
         """Check if a token supports staking."""
         try:
