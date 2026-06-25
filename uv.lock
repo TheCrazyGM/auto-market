@@ -62,7 +62,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "hive-nectar", git = "https://github.com/srbde/hive-nectar?rev=main" },
-    { name = "nectarengine" },
+    { name = "nectarengine", git = "https://github.com/srbde/nectarengine?rev=main" },
     { name = "pyyaml" },
     { name = "rich" },
 ]
@@ -308,15 +308,11 @@ wheels = [
 [[package]]
 name = "nectarengine"
 version = "1.0.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/srbde/nectarengine?rev=main#97fc4fd212e0597206568865e364f14901331019" }
 dependencies = [
     { name = "click-shell" },
     { name = "hive-nectar" },
     { name = "httpx2" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/07/49/9c2f7c6429b54a5b25ff8b9b5a243e7132deb36b1bfe2997a1546b24815a/nectarengine-1.0.1.tar.gz", hash = "sha256:25c77cfbfe9c65fc992936ee87cc26ffd43c2a28d5cabd33379d7be3f71ab8ac", size = 33639, upload-time = "2026-06-04T15:05:07.287Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/bc/2f669f8cc7a2d71cf094e452d7fb613f22b1e6627114b0e51cedd31ad188/nectarengine-1.0.1-py3-none-any.whl", hash = "sha256:c76a50bdefe0da3a2a1cbbf69383f3a7a2855348c4bf5d2619ef9b30c334518c", size = 41791, upload-time = "2026-06-04T15:05:06.29Z" },
 ]
 
 [[package]]

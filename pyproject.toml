@@ -71,3 +71,4 @@ exclude = [
 
 [tool.uv.sources]
 hive-nectar = { git = "https://github.com/srbde/hive-nectar", rev = "main" }
+nectarengine = { git = "https://github.com/srbde/nectarengine", rev = "main" }
